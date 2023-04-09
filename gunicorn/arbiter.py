@@ -204,6 +204,8 @@ class Arbiter(object):
             while True:
                 self.maybe_promote_master()
 
+                # 为了方便调试，注释掉信号处理！！！
+                # ===================================================
                 sig = self.SIG_QUEUE.pop(0) if self.SIG_QUEUE else None
                 if sig is None:
                     self.sleep()
@@ -222,6 +224,8 @@ class Arbiter(object):
                     continue
                 self.log.info("Handling signal: %s", signame)
                 handler()
+                # ========================================================
+                
                 self.wakeup()
         except (StopIteration, KeyboardInterrupt):
             self.halt()
@@ -566,6 +570,7 @@ class Arbiter(object):
 
     def spawn_worker(self):
         self.worker_age += 1
+        self.log.debug(f"worker类型: {self.worker_class}")
         worker = self.worker_class(self.worker_age, self.pid, self.LISTENERS,
                                    self.app, self.timeout / 2.0,
                                    self.cfg, self.log)
@@ -596,7 +601,6 @@ class Arbiter(object):
             
             # 子进程进入主循环，直到退出
             self.log.debug(f"子进程[{child_pid}]进入主循环,直到退出")
-            self.log.debug("TODO================================")
             worker.init_process()
             sys.exit(0)
         except SystemExit:

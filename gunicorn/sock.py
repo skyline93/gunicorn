@@ -179,6 +179,7 @@ def create_sockets(conf, log, fds=None):
     for addr in laddr:
         sock_type = _sock_type(addr)
         sock = None
+        log.debug(f"创建套接字, 尝试5次, 都失败就会退出")
         for i in range(5):
             try:
                 sock = sock_type(addr, conf, log)

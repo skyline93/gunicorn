@@ -28,12 +28,15 @@ class SyncWorker(base.Worker):
         client, addr = listener.accept()
         client.setblocking(1)
         util.close_on_exec(client)
+        self.log.debug(f"[{os.getpid()}]处理请求, 地址：{addr}>>>>>>>>")
         self.handle(listener, client, addr)
 
     def wait(self, timeout):
         try:
             self.notify()
+            self.log.debug(f"[{os.getpid()}]select阻塞等待, 为了方便调试, 不设置超时时间================================================================")
             ret = select.select(self.wait_fds, [], [], timeout)
+            # ret = select.select(self.wait_fds, [], [])
             if ret[0]:
                 if self.PIPE[0] in ret[0]:
                     os.read(self.PIPE[0], 1)
@@ -57,6 +60,7 @@ class SyncWorker(base.Worker):
         return True
 
     def run_for_one(self, timeout):
+        self.log.debug(f"进入run_for_one")
         listener = self.sockets[0]
         while self.alive:
             self.notify()
@@ -86,6 +90,7 @@ class SyncWorker(base.Worker):
                 return
 
     def run_for_multiple(self, timeout):
+        self.log.debug(f"进入run_for_multiple")
         while self.alive:
             self.notify()
 
@@ -113,6 +118,7 @@ class SyncWorker(base.Worker):
         # if no timeout is given the worker will never wait and will
         # use the CPU for nothing. This minimal timeout prevent it.
         timeout = self.timeout or 0.5
+        self.log.debug(f"设置select超时时间为{timeout}")
 
         # self.socket appears to lose its blocking status after
         # we fork in the arbiter. Reset it here.
@@ -130,7 +136,7 @@ class SyncWorker(base.Worker):
             if self.cfg.is_ssl:
                 client = ssl.wrap_socket(client, server_side=True,
                                          **self.cfg.ssl_options)
-
+            self.log.debug(f"解析请求>>>>>>>>")
             parser = http.RequestParser(self.cfg, client, addr)
             req = next(parser)
             self.handle_request(listener, req, client, addr)
@@ -171,12 +177,16 @@ class SyncWorker(base.Worker):
             # Force the connection closed until someone shows
             # a buffering proxy that supports Keep-Alive to
             # the backend.
+            self.log.debug(f"environ: {environ}")
+            self.log.debug(f"resp: {resp}")
             resp.force_close()
             self.nr += 1
             if self.nr >= self.max_requests:
                 self.log.info("Autorestarting worker after current request.")
                 self.alive = False
+            self.log.debug(f"应用调用, 从这开始就是Flask接收到请求后的处理了!!!>>>>>>>>>>>>>>>>>")
             respiter = self.wsgi(environ, resp.start_response)
+            self.log.debug(f"将响应数据回写给客户端")
             try:
                 if isinstance(respiter, environ['wsgi.file_wrapper']):
                     resp.write_file(respiter)

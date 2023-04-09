@@ -221,6 +221,7 @@ class Response(object):
         return True
 
     def start_response(self, status, headers, exc_info=None):
+        log.debug(f"回调入口start_response, 参数: status: {status}, headers: {headers}, exc_info: {exc_info}")
         if exc_info:
             try:
                 if self.status and self.headers_sent:
@@ -319,6 +320,7 @@ class Response(object):
         tosend.extend(["%s: %s\r\n" % (k, v) for k, v in self.headers])
 
         header_str = "%s\r\n" % "".join(tosend)
+        # 通过sock.sendall发送响应头数据
         util.write(self.sock, util.to_bytestring(header_str, "latin-1"))
         self.headers_sent = True
 

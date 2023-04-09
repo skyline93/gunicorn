@@ -139,11 +139,14 @@ class Worker(object):
 
         # Enter main run loop
         self.booted = True
+        self.log.debug("TODO [gunicorn.workers.gthread.ThreadWorker]==========================================")
         self.run()
 
     def load_wsgi(self):
         try:
+            self.log.debug("加载wsgi应用")
             self.wsgi = self.app.wsgi()
+            self.log.debug(f"wsgi: {self.wsgi}")
         except SyntaxError as e:
             if not self.cfg.reload:
                 raise
