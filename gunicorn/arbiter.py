@@ -570,22 +570,33 @@ class Arbiter(object):
                                    self.app, self.timeout / 2.0,
                                    self.cfg, self.log)
         self.cfg.pre_fork(self, worker)
+        
+        self.log.debug(f"fork子进程>>>")
         pid = os.fork()
         if pid != 0:
+            # 父进程执行，pid为子进程ID
             worker.pid = pid
+            self.log.debug(f"父进程pid [{os.getpid()}]")
             self.WORKERS[pid] = worker
             return pid
 
+        # 子进程执行
         # Do not inherit the temporary files of other workers
         for sibling in self.WORKERS.values():
             sibling.tmp.close()
 
         # Process Child
         worker.pid = os.getpid()
+        child_pid = worker.pid
+        self.log.debug(f"子进程worker.pid > {child_pid}")
         try:
             util._setproctitle("worker [%s]" % self.proc_name)
             self.log.info("Booting worker with pid: %s", worker.pid)
             self.cfg.post_fork(self, worker)
+            
+            # 子进程进入主循环，直到退出
+            self.log.debug(f"子进程[{child_pid}]进入主循环,直到退出")
+            self.log.debug("TODO================================")
             worker.init_process()
             sys.exit(0)
         except SystemExit:
