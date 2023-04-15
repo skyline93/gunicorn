@@ -13,6 +13,7 @@
                 "app:app",
                 "--log-level", "debug",
                 "--threads", "2",
+                "--worker-connections", "3",
             ],
             "justMyCode": true
         }

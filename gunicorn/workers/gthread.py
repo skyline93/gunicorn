@@ -19,6 +19,7 @@ import socket
 import ssl
 import sys
 import time
+import threading
 from collections import deque
 from datetime import datetime
 from functools import partial
@@ -195,6 +196,7 @@ class ThreadWorker(base.Worker):
             self.notify()
 
             # can we accept more connections?
+            self.log.debug(f"[{os.getpid()}] 当前连接数: {self.nr_conns}, 最大连接数: {self.worker_connections}")
             if self.nr_conns < self.worker_connections:
                 # wait for an event
                 events = self.poller.select(1.0)
@@ -309,6 +311,10 @@ class ThreadWorker(base.Worker):
                                         conn.server, self.cfg)
             environ["wsgi.multithread"] = True
             self.nr += 1
+            
+            t = threading.currentThread()
+            self.log.debug(f"[{os.getpid()}-{t.getName()}-{t.ident}] 当前请求数: {self.nr},最大请求数: {self.max_requests}")
+            
             if self.nr >= self.max_requests:
                 if self.alive:
                     self.log.info("Autorestarting worker after current request.")

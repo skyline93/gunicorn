@@ -139,7 +139,7 @@ class Worker(object):
 
         # Enter main run loop
         self.booted = True
-        self.log.debug("TODO [gunicorn.workers.gthread.ThreadWorker]==========================================")
+        self.log.debug("TODO [gunicorn.workers.geventlet.EventletWorker]==========================================")
         self.run()
 
     def load_wsgi(self):
